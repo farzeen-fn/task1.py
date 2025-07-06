@@ -1,0 +1,48 @@
+import numpy as np
+
+def gaussian_elimination(A, b):
+    A = A.astype(float)  # Ensure float division
+    b = b.astype(float)
+    n = len(b)
+
+    # Forward elimination
+    for i in range(n):
+        # Pivot if needed
+        max_row = np.argmax(abs(A[i:, i])) + i
+        if A[max_row, i] == 0:
+            raise ValueError("Matrix is singular or system has no unique solution.")
+
+        # Swap rows
+        A[[i, max_row]] = A[[max_row, i]]
+        b[[i, max_row]] = b[[max_row, i]]
+
+        # Eliminate entries below pivot
+        for j in range(i + 1, n):
+            factor = A[j, i] / A[i, i]
+            A[j, i:] -= factor * A[i, i:]
+            b[j] -= factor * b[i]
+
+    # Back substitution
+    x = np.zeros(n)
+    for i in reversed(range(n)):
+        x[i] = (b[i] - np.dot(A[i, i+1:], x[i+1:])) / A[i, i]
+
+    return x
+
+def main():
+    size = int(input("Enter the number of variables (2 or 3): "))
+    print(f"Enter the {size}x{size} coefficient matrix A:")
+    A = np.array([list(map(float, input().split())) for _ in range(size)])
+    
+    print(f"Enter the {size}x1 constant vector b:")
+    b = np.array([float(input()) for _ in range(size)])
+    
+    try:
+        solution = gaussian_elimination(A, b)
+        print("\nSolution vector x:")
+        print(solution)
+    except ValueError as e:
+        print("Error:", e)
+
+if __name__ == "__main__":
+    main()
