@@ -1,0 +1,110 @@
+def input_matrix_vector():
+    n = int(input("Enter the size of the matrix (2 or 3): "))
+    if n not in [2, 3]:
+        print("Only 2x2 or 3x3 supported.")
+        return None, None
+
+    print(f"\nEnter the {n}x{n} matrix A:")
+    A = [[float(input(f"A[{i+1}][{j+1}]: ")) for j in range(n)] for i in range(n)]
+
+    print(f"\nEnter the {n}x1 vector b:")
+    b = [float(input(f"b[{i+1}]: ")) for i in range(n)]
+
+    return A, b
+
+# ----------------------------
+# Gaussian Elimination
+# ----------------------------
+def gaussian_elimination(A, b):
+    n = len(A)
+
+    for i in range(n):
+        # Pivot if needed
+        if A[i][i] == 0:
+            for k in range(i+1, n):
+                if A[k][i] != 0:
+                    A[i], A[k] = A[k], A[i]
+                    b[i], b[k] = b[k], b[i]
+                    break
+
+        # Eliminate
+        for j in range(i+1, n):
+            ratio = A[j][i] / A[i][i]
+            for k in range(n):
+                A[j][k] -= ratio * A[i][k]
+            b[j] -= ratio * b[i]
+
+    # Back substitution
+    x = [0] * n
+    for i in range(n-1, -1, -1):
+        sum_ax = sum(A[i][j] * x[j] for j in range(i+1, n))
+        x[i] = (b[i] - sum_ax) / A[i][i]
+    return x
+
+# ----------------------------
+# Inverse Matrix Method
+# ----------------------------
+def inverse_2x2(A):
+    det = A[0][0]*A[1][1] - A[0][1]*A[1][0]
+    if det == 0:
+        return None
+    inv = [
+        [ A[1][1]/det, -A[0][1]/det],
+        [-A[1][0]/det,  A[0][0]/det]
+    ]
+    return inv
+
+def inverse_3x3(A):
+    det = (
+        A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]) -
+        A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]) +
+        A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0])
+    )
+    if det == 0:
+        return None
+
+    # Cofactor matrix
+    cof = [[0]*3 for _ in range(3)]
+    for i in range(3):
+        for j in range(3):
+            minor = [row[:j] + row[j+1:] for k, row in enumerate(A) if k != i]
+            cof[i][j] = ((-1)**(i+j)) * (minor[0][0]*minor[1][1] - minor[0][1]*minor[1][0])
+
+    # Transpose (adjugate)
+    adj = [[cof[j][i] for j in range(3)] for i in range(3)]
+
+    # Divide by determinant
+    inv = [[adj[i][j]/det for j in range(3)] for i in range(3)]
+    return inv
+
+def multiply_matrix_vector(M, v):
+    return [sum(M[i][j] * v[j] for j in range(len(v))) for i in range(len(M))]
+
+# ----------------------------
+# Main Program
+# ----------------------------
+def main():
+    A, b = input_matrix_vector()
+    if A is None:
+        return
+
+    print("\nSolving using Gaussian Elimination...")
+    A_copy = [row[:] for row in A]
+    b_copy = b[:]
+    solution_gauss = gaussian_elimination(A_copy, b_copy)
+    print("Solution (Gaussian Elimination):", solution_gauss)
+
+    print("\nSolving using Inverse Matrix Method...")
+    if len(A) == 2:
+        A_inv = inverse_2x2(A)
+    else:
+        A_inv = inverse_3x3(A)
+
+    if A_inv is None:
+        print("Matrix is singular. Inverse does not exist.")
+    else:
+        solution_inv = multiply_matrix_vector(A_inv, b)
+        print("Solution (Inverse Method):", solution_inv)
+
+if __name__ == "__main__":
+    main()
